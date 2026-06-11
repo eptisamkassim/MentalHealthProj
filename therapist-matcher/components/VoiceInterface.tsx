@@ -25,7 +25,7 @@ export default function VoiceInterface() {
     const [userId] = useState(() => getUserId())
     const [conversationId, setConversationId] = useState("")
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const [userPreferences, setPreferences] = useState<any>(null)
+    const [userPreferences, setUserPreferences] = useState<any>(null)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [therapists, setTherapists] = useState<any[]>([])
     const [currentIndex, setCurrentIndex] = useState(0)
@@ -49,7 +49,7 @@ export default function VoiceInterface() {
         setConversationId("")
         setMessages([])
         setTherapists([])
-        setPreferences(null)
+        setUserPreferences(null)
         setChatFailureMessage("")
         setEmailFailureMessage("")
         setTherapistFailureMessage("")
@@ -107,18 +107,20 @@ export default function VoiceInterface() {
     }
 
     async function startRecording() {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+            mediaRecorderRef.current = new MediaRecorder(stream)
+            audioChunksRef.current = []
 
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-        mediaRecorderRef.current = new MediaRecorder(stream)
-        audioChunksRef.current = []
+            mediaRecorderRef.current.ondataavailable = (e) => {
+                audioChunksRef.current.push(e.data)
+            }
 
-        // on each chunk of data, push to audioChunksRef
-        mediaRecorderRef.current.ondataavailable = (e) => {
-            audioChunksRef.current.push(e.data);
-        };
-
-        mediaRecorderRef.current.start()
-        setIsRecording(true)
+            mediaRecorderRef.current.start()
+            setIsRecording(true)
+        } catch {
+            setChatFailureMessage("Microphone access denied")
+        }
     }
 
     function stopRecording() {
@@ -136,17 +138,20 @@ export default function VoiceInterface() {
     }
 
     async function sendAudioToBackend(audioBlob: Blob) {
-        const formData = new FormData()
-        formData.append("file", audioBlob, "audio.webm")
+        try {
+            const formData = new FormData()
+            formData.append("file", audioBlob, "audio.webm")
 
-        const response = await fetch("http://localhost:8000/api/voice/transcribe", {
-            method: "POST",
-            body: formData
-        })
+            const response = await fetch("http://localhost:8000/api/voice/transcribe", {
+                method: "POST",
+                body: formData
+            })
 
-        // get transcript text from response
-        const data = await response.json()
-        await sendMessage(data.transcript)
+            const data = await response.json()
+            await sendMessage(data.transcript)
+        } catch {
+            setChatFailureMessage("Voice transcription failed")
+        }
     }
 
     async function sendMessage(overrideText?: string) {
@@ -176,49 +181,51 @@ export default function VoiceInterface() {
 
             const data = await response.json()
             setMessages(prev => [...prev, { role: "assistant", content: data.message }])
+            setAiLoadingState(false)
             setConversationId(data.conversation_id)
             const localConvoId = data.conversation_id
 
             if (therapists.length === 0) {
-                const preferencesResponse = await fetch("http://localhost:8000/api/chat/extract-preferences", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        conversation_id: localConvoId
-                    })
-                })
-
-                const preferenceData = await preferencesResponse.json()
-                setPreferences(preferenceData)
-                localStorage.setItem("userPreferences", JSON.stringify(preferenceData))
-
-                console.log(preferenceData)
-
-                if (preferenceData.insurance && preferenceData.therapy_type &&
-                    preferenceData.concerns.length > 0 && therapists.length === 0) {
-
-                    try {
-                        setTherapistLoadingState(true)
-                        setTherapistFailureMessage("")
-                        const therapistsResponse = await fetch("http://localhost:8000/api/therapists/search", {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify(preferenceData)
+                try {
+                    const preferencesResponse = await fetch("http://localhost:8000/api/chat/extract-preferences", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            conversation_id: localConvoId
                         })
+                    })
 
-                        const therapistsData = await therapistsResponse.json()
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        localTherapists = therapistsData.map((item: any) => item.therapist)
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        localStorage.setItem("therapists", JSON.stringify(therapistsData.map((item: any) => item.therapist)))
-                        setTherapists(localTherapists)
-                        setMessages(prev => [...prev, { role: "assistant", content: "We found some matches" }])
+                    const preferenceData = await preferencesResponse.json()
+                    setUserPreferences(preferenceData)
+                    localStorage.setItem("userPreferences", JSON.stringify(preferenceData))
 
-                    } catch {
-                        setTherapistFailureMessage("Unable to show therapists")
-                    } finally {
-                        setTherapistLoadingState(false)
+                    if (preferenceData.insurance && preferenceData.therapy_type &&
+                        preferenceData.concerns.length > 0 && therapists.length === 0) {
+
+                        try {
+                            setTherapistLoadingState(true)
+                            setTherapistFailureMessage("")
+                            const therapistsResponse = await fetch("http://localhost:8000/api/therapists/search", {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify(preferenceData)
+                            })
+
+                            const therapistsData = await therapistsResponse.json()
+                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                            localTherapists = therapistsData.map((item: any) => item.therapist)
+                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                            localStorage.setItem("therapists", JSON.stringify(therapistsData.map((item: any) => item.therapist)))
+                            setTherapists(localTherapists)
+                            setMessages(prev => [...prev, { role: "assistant", content: "We found some matches" }])
+                        } catch {
+                            setTherapistFailureMessage("Unable to show therapists")
+                        } finally {
+                            setTherapistLoadingState(false)
+                        }
                     }
+                } catch {
+                    setTherapistFailureMessage("Unable to load therapist recommendations")
                 }
             }
         } catch (error) {

@@ -11,11 +11,15 @@ class MatchingService:
         text = f"{preferences.therapy_type} {' '.join(preferences.concerns)}"  # combine therapy_type and concerns
         
         # 2. generate embedding for user preferences
-        response = gpt_service.client.embeddings.create(
-            input=text,
-            model="text-embedding-3-small"
-        )
-        user_embedding = response.data[0].embedding
+        try:
+            response = gpt_service.client.embeddings.create(
+                input=text,
+                model="text-embedding-3-small"
+            )
+            user_embedding = response.data[0].embedding
+        except Exception as e:
+            print(f"Embedding error: {str(e)}")
+            raise
         
         # 3. score each therapist
         scored = []
@@ -53,10 +57,12 @@ class MatchingService:
                     {"role": "user", "content": prompt_string}
                 ]
             )
+            reasons = json.loads(response.choices[0].message.content)
+        except json.JSONDecodeError:
+            return top_10
         except Exception as e:
-            return {}
-
-        reasons = json.loads(response.choices[0].message.content)
+            print(f"GPT match reason error: {str(e)}")
+            return top_10
 
         for i, result in enumerate(top_10):
             result["therapist"]["match_reason"] = reasons[i]

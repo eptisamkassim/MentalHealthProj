@@ -15,14 +15,5 @@ class Outreach(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
     def __repr__(self):
-        return f"<User(id={self.id})>"
+        return f"<Outreach(id={self.id})>"
     
-
-# For MVP the minimum useful fields are:
-
-# id -- primary key
-# therapist_id -- which therapist
-# user_id -- which user
-# status -- pending/replied/scheduled
-# email_sent_at -- when they reached out
-# created_at -- timestamp

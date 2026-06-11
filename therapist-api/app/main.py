@@ -6,7 +6,7 @@ from app.routes.scraper import router as scraper_router
 from app.routes.therapists import router as therapists_router
 from app.routes.email import router as email_router
 from app.routes.outreach import router as outreach_router
-from app.routes.voice import router as audio_router
+from app.routes.voice import router as voice_router
 import redis
 import uvicorn
 import os
@@ -55,7 +55,7 @@ app.include_router(scraper_router, prefix="/api/scrape", tags=["scrape"])
 app.include_router(therapists_router, prefix="/api/therapists", tags=["therapists"])
 app.include_router(email_router, prefix="/api/email", tags=["email"])
 app.include_router(outreach_router, prefix="/api/outreach", tags=["outreach"])
-app.include_router(audio_router, prefix="/api/voice", tags=["audio"])
+app.include_router(voice_router, prefix="/api/voice", tags=["voice"])
 
 
 if __name__ == "__main__":

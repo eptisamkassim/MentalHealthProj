@@ -58,18 +58,15 @@ class GPTService:
                 max_tokens=256,
                 messages=[system_message] + conversation
             )
-        
             assistant_message = response.choices[0].message.content
             conversation = GPTService.add_message(conversation, "assistant", assistant_message)
-            
             return {
                 "message": assistant_message,
                 "conversation": conversation
             }
         except Exception as e:
-            print(f"GPT API Error: {str(e)}")  # ADD THIS LINE
-            # Log the error, return empty dict or raise
-            return {}
+            print(f"GPT API Error: {str(e)}")
+            raise
 
     
     def extract_preferences(self, conversation: list) -> dict:
@@ -89,16 +86,15 @@ class GPTService:
                 model="gpt-4.1-nano",
                 max_tokens=256,
                 messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": messages_text}
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": messages_text}
                 ]
             )
-        except Exception as e:
-            return {}
-        
-        try:
             return json.loads(response.choices[0].message.content)
         except json.JSONDecodeError:
+            return {}
+        except Exception as e:
+            print(f"GPT API Error: {str(e)}")
             return {}
 
     def generate_email(self, therapist, user_preferences, user_name, user_email, user_phone):
@@ -131,21 +127,24 @@ class GPTService:
                 model="gpt-4.1-nano",
                 max_tokens=256,
                 messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_message}
-            ]
-            )      
-        except Exception as e:
-            return {}
-        
-        try:
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_message}
+                ]
+            )
             return json.loads(response.choices[0].message.content)
         except json.JSONDecodeError:
             return {}
+        except Exception as e:
+            print(f"GPT API Error: {str(e)}")
+            return {}
         
     def transcribe(self, file_bytes: bytes) -> str:
-        transcript = self.client.audio.transcriptions.create(
-            model="whisper-1",
-            file=("audio.webm", file_bytes, "audio/webm")
-        )
-        return transcript.text
+        try:
+            transcript = self.client.audio.transcriptions.create(
+                model="whisper-1",
+                file=("audio.webm", file_bytes, "audio/webm")
+            )
+            return transcript.text
+        except Exception as e:
+            print(f"Transcription error: {str(e)}")
+            raise

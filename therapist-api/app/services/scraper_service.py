@@ -30,83 +30,93 @@ class ScraperService:
 
                 for i, href in enumerate(hrefs):
                     therapist_name = names[i]
-                    await page.goto(href)
-                    await page.wait_for_load_state("networkidle")  # wait for JS to finish
+                    try:
+                        await page.goto(href)
+                        await page.wait_for_load_state("networkidle")  # wait for JS to finish
 
-                    insurance_list = []
-                    insurance_items = await page.query_selector_all("div.insurance ul.section-list li")
-                    for item in insurance_items:
-                        text = await item.inner_text()
-                        insurance_list.append(text)
+                        insurance_list = []
+                        insurance_items = await page.query_selector_all("div.insurance ul.section-list li")
+                        for item in insurance_items:
+                            text = await item.inner_text()
+                            insurance_list.append(text)
 
-                    accepting_new_clients = None
-                    session_type = "not available"
-
-                    appt_element = await page.query_selector("div.at-a-glance_row_appointments div[is-company='false']")
-                    if appt_element:
-                        appt_text = await appt_element.inner_text()
-
-                        # Parse accepting new clients
-                        if "waitlist" in appt_text.lower():
-                            accepting_new_clients = False
-                        elif "available" in appt_text.lower():
-                            accepting_new_clients = True
-
-                        # Parse session type
-                        if "in-person and online" in appt_text.lower():
-                            session_type = "both"
-                        elif "online" in appt_text.lower():
-                            session_type = "online"
-                        elif "in-person" in appt_text.lower():
-                            session_type = "in-person"
-
-                    else:
                         accepting_new_clients = None
                         session_type = "not available"
 
+                        appt_element = await page.query_selector("div.at-a-glance_row_appointments div[is-company='false']")
+                        if appt_element:
+                            appt_text = await appt_element.inner_text()
 
-                    bio_element = await page.query_selector("div.personal-statement-container")
-                    if bio_element:
-                        bio_text = await bio_element.inner_text()
-                    else:
-                        bio_text = "No Bio"
+                            # Parse accepting new clients
+                            if "waitlist" in appt_text.lower():
+                                accepting_new_clients = False
+                            elif "available" in appt_text.lower():
+                                accepting_new_clients = True
 
-                    groups = await page.query_selector_all(".attributes-group")
-                    specialty_list = []
-                    for group in groups:
-                        heading = await group.query_selector("h3.attributes-group-title")
-                        heading_text = await heading.inner_text()
-                        
-                        if "Top Specialties" in heading_text:
-                            items = await group.query_selector_all("span.attribute_base")
-                            for item in items:
-                                text = await item.inner_text()
-                                specialty_list.append(text)
-                            break  # found what we need, stop looping
-                    
-                    therapy_type_group = await page.query_selector_all("#treatment-approach-attributes-section span.attribute_base")
-                    therapy_type_list = []
+                            # Parse session type
+                            if "in-person and online" in appt_text.lower():
+                                session_type = "both"
+                            elif "online" in appt_text.lower():
+                                session_type = "online"
+                            elif "in-person" in appt_text.lower():
+                                session_type = "in-person"
 
-                    for item in therapy_type_group:
-                        text = await item.inner_text()
-                        therapy_type_list.append(text)
+                        else:
+                            accepting_new_clients = None
+                            session_type = "not available"
 
-                    new_therapist = Therapist(
-                        name = therapist_name,
-                        bio = bio_text,
-                        insurance_list = insurance_list,
-                        specialty = specialty_list,
-                        accepting_new_clients = accepting_new_clients,
-                        session_type = session_type,
-                        location = city,
-                        therapy_type = therapy_type_list
-                    )
+                        bio_element = await page.query_selector("div.personal-statement-container")
+                        if bio_element:
+                            bio_text = await bio_element.inner_text()
+                        else:
+                            bio_text = "No Bio"
 
-                    # Check if therapist already exists by name and location
-                    existing = db.query(Therapist).filter(
-                        Therapist.name == therapist_name,
-                    ).first()
+                        groups = await page.query_selector_all(".attributes-group")
+                        specialty_list = []
+                        for group in groups:
+                            heading = await group.query_selector("h3.attributes-group-title")
+                            if not heading:
+                                continue
+                            heading_text = await heading.inner_text()
 
-                    if not existing:
-                        db.add(new_therapist)
-                        db.commit()
+                            if "Top Specialties" in heading_text:
+                                items = await group.query_selector_all("span.attribute_base")
+                                for item in items:
+                                    text = await item.inner_text()
+                                    specialty_list.append(text)
+                                break  # found what we need, stop looping
+
+                        therapy_type_group = await page.query_selector_all("#treatment-approach-attributes-section span.attribute_base")
+                        therapy_type_list = []
+
+                        for item in therapy_type_group:
+                            text = await item.inner_text()
+                            therapy_type_list.append(text)
+
+                        new_therapist = Therapist(
+                            name = therapist_name,
+                            bio = bio_text,
+                            insurance_list = insurance_list,
+                            specialty = specialty_list,
+                            accepting_new_clients = accepting_new_clients,
+                            session_type = session_type,
+                            location = city,
+                            therapy_type = therapy_type_list
+                        )
+
+                        # Check if therapist already exists by name and location
+                        existing = db.query(Therapist).filter(
+                            Therapist.name == therapist_name,
+                        ).first()
+
+                        if not existing:
+                            try:
+                                db.add(new_therapist)
+                                db.commit()
+                            except Exception as e:
+                                db.rollback()
+                                print(f"DB error saving {therapist_name}: {str(e)}")
+
+                    except Exception as e:
+                        print(f"Error scraping {href}: {str(e)}")
+                        continue
