@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Mic, ChevronLeft, ChevronRight, RotateCcw } from 'lucide-react'
 import TherapistCard from '@/components/TherapistCard'
 import ReactMarkdown from 'react-markdown'
@@ -42,6 +42,12 @@ export default function VoiceInterface() {
     const [therapistFailureMessage, setTherapistFailureMessage] = useState("")
     const mediaRecorderRef = useRef<MediaRecorder | null>(null)
     const audioChunksRef = useRef<Blob[]>([])
+    const inputRef = useRef<HTMLInputElement>(null)
+    const messagesEndRef = useRef<HTMLDivElement>(null)
+
+    useEffect(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    }, [messages])
 
 
     function resetAll() {
@@ -233,6 +239,7 @@ export default function VoiceInterface() {
             setChatFailureMessage("Chatbot Disconnected")
         } finally {
             setAiLoadingState(false)
+            setTimeout(() => inputRef.current?.focus(), 0)
         }
     }
 
@@ -252,6 +259,7 @@ export default function VoiceInterface() {
                             <ReactMarkdown>{msg.content}</ReactMarkdown>
                         </div>
                     ))}
+                    <div ref={messagesEndRef} />
                     {isAiLoading && !isTherapistLoading && <div className='text-purple-600 text-2xl'> <span className='animate-bounce' style={{ animationDelay: '0ms' }}>.</span>
                         <span className='animate-bounce' style={{ animationDelay: '150ms' }}>.</span>
                         <span className='animate-bounce' style={{ animationDelay: '300ms' }}>.</span>    </div>}
@@ -312,11 +320,12 @@ export default function VoiceInterface() {
                 )}
                 <div className="flex gap-2 mt-4">
                     <input
+                        ref={inputRef}
                         className="w-full border border-gray-300 rounded-lg p-3 text-gray-900"
                         placeholder="Describe your therapy needs..."
                         type="text"
                         value={inputText}
-                        disabled={isAiLoading || isRecording}
+                        disabled={isAiLoading || isRecording || isTherapistLoading}
                         onChange={(e) => setInputText(e.target.value)}
                         onKeyDown={(e) => { if (e.key === "Enter") sendMessage() }}
                     />
@@ -326,7 +335,7 @@ export default function VoiceInterface() {
                     </button>
                     <button className="bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-700 disabled:opacity-50 px-3"
                         onClick={() => { sendMessage() }}
-                        disabled={isAiLoading || isRecording}
+                        disabled={isAiLoading || isRecording || isTherapistLoading}
                     >
                         Send
                     </button>
