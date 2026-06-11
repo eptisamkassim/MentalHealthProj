@@ -10,12 +10,12 @@ router = APIRouter()
 gpt_service = GPTService()
 
 class EmailRequest(BaseModel):
-        therapist_id: str
-        conversation_id: str
-        user_name: str
-        user_email: str = ""
-        user_phone_number: str = ""
-        user_preferences: dict = None
+    therapist_id: str
+    conversation_id: str
+    user_name: str
+    user_email: str = ""
+    user_phone_number: str = ""
+    user_preferences: dict = None
 
 
 @router.post("/draft")

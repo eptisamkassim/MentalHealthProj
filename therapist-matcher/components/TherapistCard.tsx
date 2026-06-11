@@ -10,17 +10,17 @@ interface Therapist {
     match_reason?: string
 }
 
-export default function TherapistCard({ therapist, user_insurance, onReachOut }:
+export default function TherapistCard({ therapist, userInsurance, onReachOut }:
     {
         therapist: Therapist
-        user_insurance: string
+        userInsurance: string
         onReachOut: () => void
     }) {
 
     const initials = therapist.name.split(" ").map((n: string) => n[0]).join("").slice(0, 2)
 
-    const sorted_insurance = therapist.insurance_list?.sort((a: string) =>
-        a === user_insurance ? -1 : 1
+    const sortedInsurance = therapist.insurance_list?.sort((a: string) =>
+        a === userInsurance ? -1 : 1
     )
 
     return (
@@ -63,7 +63,7 @@ export default function TherapistCard({ therapist, user_insurance, onReachOut }:
 
             <div className="flex items-center justify-between gap-2 mt-3">
                 <p className="text-gray-400 text-xs flex-1 leading-relaxed">
-                    {sorted_insurance.slice(0, 5).join(", ")}
+                    {sortedInsurance.slice(0, 5).join(", ")}
                 </p>
                 <button onClick={onReachOut} className="bg-purple-600 text-white text-sm px-4 py-2 rounded-lg hover:bg-purple-700 flex-shrink-0">
                     Reach Out →

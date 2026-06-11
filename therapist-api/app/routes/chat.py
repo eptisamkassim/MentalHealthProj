@@ -17,9 +17,9 @@ gpt_service = GPTService()
 @router.post("/message")
 def chat_message(request: ChatMessageRequest, db: Session = Depends(get_db)):
     
-    user_exist = db.query(User).filter(User.id == request.user_id).first()
+    user_exists = db.query(User).filter(User.id == request.user_id).first()
 
-    if user_exist is None:
+    if user_exists is None:
         new_user = User(
             id = request.user_id,
             email = "" 

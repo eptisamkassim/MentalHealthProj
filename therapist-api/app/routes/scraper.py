@@ -7,6 +7,6 @@ router = APIRouter()
 
 @router.post("/therapist")
 async def scrape_therapists(db: Session = Depends(get_db)):
-    scrapper_service = ScraperService()
-    response = await scrapper_service.get_city_therapist("Boston", db)
+    scraper_service = ScraperService()
+    await scraper_service.get_city_therapist("Boston", db)
     return {"message": "Scraping complete"}

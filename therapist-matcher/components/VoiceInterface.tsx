@@ -1,9 +1,8 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { Mic, ChevronLeft, ChevronRight, RotateCcw } from 'lucide-react'
 import TherapistCard from '@/components/TherapistCard'
-import { useRef } from 'react'
 import ReactMarkdown from 'react-markdown'
 
 
@@ -24,9 +23,9 @@ export default function VoiceInterface() {
     const [messages, setMessages] = useState<{ role: string, content: string }[]>([])
     const [inputText, setInputText] = useState("")
     const [userId] = useState(() => getUserId())
-    const [conversationId, setId] = useState("")
+    const [conversationId, setConversationId] = useState("")
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const [user_preferences, setPreferences] = useState<any>(null)
+    const [userPreferences, setPreferences] = useState<any>(null)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [therapists, setTherapists] = useState<any[]>([])
     const [currentIndex, setCurrentIndex] = useState(0)
@@ -47,7 +46,7 @@ export default function VoiceInterface() {
 
     function resetAll() {
         setCurrentIndex(0)
-        setId("")
+        setConversationId("")
         setMessages([])
         setTherapists([])
         setPreferences(null)
@@ -80,13 +79,13 @@ export default function VoiceInterface() {
                     user_name: "",
                     user_email: "",
                     user_phone_number: "",
-                    user_preferences: user_preferences
+                    userPreferences: userPreferences
                 })
             })
             const data = await response.json()
             setEmailDraft(data)
         } catch {
-            setEmailFailureMessage("Unable to send a email")
+            setEmailFailureMessage("Unable to send an email")
         } finally {
             setEmailLoadingState(false)
         }
@@ -177,43 +176,41 @@ export default function VoiceInterface() {
 
             const data = await response.json()
             setMessages(prev => [...prev, { role: "assistant", content: data.message }])
-            setId(data.conversation_id)
-            const localConvoID = data.conversation_id
+            setConversationId(data.conversation_id)
+            const localConvoId = data.conversation_id
 
             if (therapists.length === 0) {
-                const preferences_response = await fetch("http://localhost:8000/api/chat/extract-preferences", {
+                const preferencesResponse = await fetch("http://localhost:8000/api/chat/extract-preferences", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
-                        conversation_id: localConvoID
+                        conversation_id: localConvoId
                     })
                 })
 
-                const preference_data = await preferences_response.json()
-                setPreferences(preference_data)
-                localStorage.setItem("user_preferences", JSON.stringify(preference_data))
+                const preferenceData = await preferencesResponse.json()
+                setPreferences(preferenceData)
+                localStorage.setItem("userPreferences", JSON.stringify(preferenceData))
 
-                console.log(preference_data)
+                console.log(preferenceData)
 
-                if (preference_data.insurance && preference_data.therapy_type && 
-                    preference_data.concerns.length > 0 && therapists.length === 0) {
+                if (preferenceData.insurance && preferenceData.therapy_type &&
+                    preferenceData.concerns.length > 0 && therapists.length === 0) {
 
                     try {
                         setTherapistLoadingState(true)
                         setTherapistFailureMessage("")
-                        const therapists_response = await fetch("http://localhost:8000/api/therapists/search", {
+                        const therapistsResponse = await fetch("http://localhost:8000/api/therapists/search", {
                             method: "POST",
                             headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify(preference_data)
+                            body: JSON.stringify(preferenceData)
                         })
 
-                        const therapists_data = await therapists_response.json()
+                        const therapistsData = await therapistsResponse.json()
                         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        setTherapists(therapists_data.map((item: any) => item.therapist))
+                        localTherapists = therapistsData.map((item: any) => item.therapist)
                         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        localStorage.setItem("therapists", JSON.stringify(therapists_data.map((item: any) => item.therapist)))
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        localTherapists = therapists_data.map((item: any) => item.therapist)
+                        localStorage.setItem("therapists", JSON.stringify(therapistsData.map((item: any) => item.therapist)))
                         setTherapists(localTherapists)
                         setMessages(prev => [...prev, { role: "assistant", content: "We found some matches" }])
 
@@ -235,7 +232,7 @@ export default function VoiceInterface() {
     return (
         <>
             <div className="bg-white rounded-xl shadow-lg p-8 max-w-2xl mx-auto relative">
-                <h1 className="text-2xl font-bold mb-6 text-center text-gray-900"> Let's find your perfect therapist </h1>
+                <h1 className="text-2xl font-bold mb-6 text-center text-gray-900"> Let&apos;s find your perfect therapist</h1>
                 <button className="absolute top-4 right-4 text-gray-400 hover:text-gray-600" type="button" onClick={resetAll}>
                     <RotateCcw size={16}></RotateCcw>
                 </button>
@@ -264,7 +261,7 @@ export default function VoiceInterface() {
                         </p>
 
                         <div className="relative ">
-                            <TherapistCard therapist={therapists[currentIndex]} user_insurance={user_preferences?.insurance || ""} onReachOut={() => handleReachOut(therapists[currentIndex])} />
+                            <TherapistCard therapist={therapists[currentIndex]} userInsurance={userPreferences?.insurance || ""} onReachOut={() => handleReachOut(therapists[currentIndex])} />
 
                             {currentIndex > 0 ? (
                                 <button onClick={goPrev} className=" absolute left-0 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full border border-gray-200 flex items-center justify-center text-gray-500  bg-white shadow-sm hover:bg-gray-50">

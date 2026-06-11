@@ -19,8 +19,6 @@ class SearchRequest(BaseModel):
 
 @router.post("/search")
 async def search_therapists(data: SearchRequest, db: Session = Depends(get_db)):
-    
-    print("MY DATA IS::::", data)
     # filter by insurance
     if data.insurance.lower() in ["out of pocket", "out-of-pocket"]:
         therapists = db.query(Therapist).all()

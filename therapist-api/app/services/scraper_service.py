@@ -107,8 +107,6 @@ class ScraperService:
                         Therapist.name == therapist_name,
                     ).first()
 
-                    if existing:
-                        pass  # skip, already in database
-                    else:
+                    if not existing:
                         db.add(new_therapist)
                         db.commit()

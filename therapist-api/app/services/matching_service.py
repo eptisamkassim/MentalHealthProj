@@ -39,10 +39,10 @@ class MatchingService:
         scored.sort(key=lambda x: x["score"], reverse=True)
 
         top_10 = scored[:10]
-        promptString= "" 
+        prompt_string= "" 
 
-        for i in top_10:
-            promptString += f"Name: {i['therapist']['name']} Specialty: {i['therapist']['specialty']} Therapy Type {i['therapist']['therapy_type']}\n"
+        for item in top_10:
+            prompt_string += f"Name: {item['therapist']['name']} Specialty: {item['therapist']['specialty']} Therapy Type {item['therapist']['therapy_type']}\n"
 
         try:
             response = gpt_service.client.chat.completions.create(
@@ -50,7 +50,7 @@ class MatchingService:
                 max_tokens=800,
                 messages=[
                     {"role": "system", "content": f"For every therapist in the prompt string below mention why they are a good match with the user looking for '{preferences.therapy_type}' for '{preferences.concerns}' in 1. If you are referring to a therapist only use their first name.  Return only a JSON array of 10 strings "},
-                    {"role": "user", "content": promptString}
+                    {"role": "user", "content": prompt_string}
                 ]
             )
         except Exception as e:

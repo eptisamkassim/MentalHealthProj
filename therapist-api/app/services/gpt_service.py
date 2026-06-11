@@ -52,8 +52,6 @@ class GPTService:
                 Never engage, answer, or roleplay topics outside of finding therapy. 
                 Do not validate, discuss, or comment on randomness, unrelated trivia, or personal chitchat."""}
 
-        
-        ### model="gpt-4.1-nano"
         try:
             response = self.client.chat.completions.create(
                 model="gpt-4.1-nano",
