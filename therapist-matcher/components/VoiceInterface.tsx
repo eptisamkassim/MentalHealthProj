@@ -50,6 +50,7 @@ export default function VoiceInterface() {
     }, [messages])
 
 
+
     function resetAll() {
         setCurrentIndex(0)
         setConversationId("")
@@ -67,6 +68,7 @@ export default function VoiceInterface() {
         }
     }
 
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     async function handleReachOut(therapist: any) {
         setEmailLoadingState(true)
@@ -76,7 +78,7 @@ export default function VoiceInterface() {
             setSelectedTherapist(therapist)
             setShowModal(true)
 
-            const response = await fetch("http://localhost:8000/api/email/draft", {
+            const response = await fetch("/api/email/draft", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -148,7 +150,7 @@ export default function VoiceInterface() {
             const formData = new FormData()
             formData.append("file", audioBlob, "audio.webm")
 
-            const response = await fetch("http://localhost:8000/api/voice/transcribe", {
+            const response = await fetch("/api/voice/transcribe", {
                 method: "POST",
                 body: formData
             })
@@ -175,7 +177,7 @@ export default function VoiceInterface() {
         let localTherapists: any[] = []
 
         try {
-            const response = await fetch("http://localhost:8000/api/chat/message", {
+            const response = await fetch("/api/chat/message", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -189,11 +191,12 @@ export default function VoiceInterface() {
             setMessages(prev => [...prev, { role: "assistant", content: data.message }])
             setAiLoadingState(false)
             setConversationId(data.conversation_id)
+
             const localConvoId = data.conversation_id
 
             if (therapists.length === 0) {
                 try {
-                    const preferencesResponse = await fetch("http://localhost:8000/api/chat/extract-preferences", {
+                    const preferencesResponse = await fetch("/api/chat/extract-preferences", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({
@@ -211,7 +214,7 @@ export default function VoiceInterface() {
                         try {
                             setTherapistLoadingState(true)
                             setTherapistFailureMessage("")
-                            const therapistsResponse = await fetch("http://localhost:8000/api/therapists/search", {
+                            const therapistsResponse = await fetch("/api/therapists/search", {
                                 method: "POST",
                                 headers: { "Content-Type": "application/json" },
                                 body: JSON.stringify(preferenceData)
@@ -271,51 +274,51 @@ export default function VoiceInterface() {
                 {therapistFailureMessage.length > 0 && <div> <span className='text-red-500'>{therapistFailureMessage}</span></div>}
                 {!isTherapistLoading && therapists.length > 0 && (
                     <div className="mt-8">
-                        <p className="text-gray-700 font-medium mb-4">
+                        <p className="text-gray-700 font-medium mb-3">
                             Here are some therapists we think will be a great match for you
                         </p>
 
-                        <div className="relative ">
-                            <TherapistCard therapist={therapists[currentIndex]} userInsurance={userPreferences?.insurance || ""} onReachOut={() => handleReachOut(therapists[currentIndex])} />
+                        <div className="relative">
+                                    <TherapistCard
+                                        therapist={therapists[currentIndex]}
+                                        userInsurance={userPreferences?.insurance || ""}
+                                        onReachOut={() => handleReachOut(therapists[currentIndex])}
+                                    />
 
-                            {currentIndex > 0 ? (
-                                <button onClick={goPrev} className=" absolute left-0 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full border border-gray-200 flex items-center justify-center text-gray-500  bg-white shadow-sm hover:bg-gray-50">
-                                    <ChevronLeft size={18} />
-                                </button>
-                            ) : 
-                            <div></div>
-                            }
+                                    {currentIndex > 0 ? (
+                                        <button onClick={goPrev} className="absolute left-0 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full border border-gray-200 flex items-center justify-center text-gray-500 bg-white shadow-sm hover:bg-gray-50">
+                                            <ChevronLeft size={18} />
+                                        </button>
+                                    ) : <div />}
 
-                            {currentIndex < therapists.length - 1 ? (
-                                <button onClick={goNext} className=" absolute right-0 top-1/2 -translate-y-1/2  w-9 h-9 -mx-3 rounded-full border border-gray-200 flex items-center justify-center text-gray-500 bg-white  shadow-sm hover:bg-gray-50">
-                                    <ChevronRight size={18} />
-                                </button>
-                            ) : 
-                            <div></div>
-                        }
-                        </div>
-
-                        <div className="flex justify-center gap-1 mt-3 mb-6">
-                            {therapists.map((_, idx) => (
-                                <div key={idx} className={`w-2 h-2 rounded-full ${idx === currentIndex ? "bg-purple-600" : "bg-gray-200"}`} />
-                            ))}
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-2 px-10">
-                            {therapists.slice(currentIndex + 1, currentIndex + 3).map((t, idx) => (
-                                <div key={idx} className="bg-gray-50 border border-gray-200 rounded-xl p-3 opacity-60">
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-700 text-xs font-bold flex-shrink-0">
-                                            {t.name.split(" ").map((n: string) => n[0]).join("").slice(0, 2)}
-                                        </div>
-                                        <div>
-                                            <p className="text-xs font-medium text-gray-900">{t.name}</p>
-                                            <p className="text-xs text-gray-500">{t.specialty?.slice(0, 2).join(", ")}</p>
-                                        </div>
-                                    </div>
+                                    {currentIndex < therapists.length - 1 ? (
+                                        <button onClick={goNext} className="absolute right-0 top-1/2 -translate-y-1/2 w-9 h-9 -mx-3 rounded-full border border-gray-200 flex items-center justify-center text-gray-500 bg-white shadow-sm hover:bg-gray-50">
+                                            <ChevronRight size={18} />
+                                        </button>
+                                    ) : <div />}
                                 </div>
-                            ))}
-                        </div>
+
+                                <div className="flex justify-center gap-1 mt-3 mb-6">
+                                    {therapists.map((_, idx) => (
+                                        <div key={idx} className={`w-2 h-2 rounded-full ${idx === currentIndex ? "bg-purple-600" : "bg-gray-200"}`} />
+                                    ))}
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-2 px-10">
+                                    {therapists.slice(currentIndex + 1, currentIndex + 3).map((t, idx) => (
+                                        <div key={idx} className="bg-gray-50 border border-gray-200 rounded-xl p-3 opacity-60">
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-700 text-xs font-bold flex-shrink-0">
+                                                    {t.name.split(" ").map((n: string) => n[0]).join("").slice(0, 2)}
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs font-medium text-gray-900">{t.name}</p>
+                                                    <p className="text-xs text-gray-500">{t.specialty?.slice(0, 2).join(", ")}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
                     </div>
                 )}
                 <div className="flex gap-2 mt-4">

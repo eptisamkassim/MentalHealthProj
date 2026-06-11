@@ -69,6 +69,7 @@ def chat_message(request: ChatMessageRequest, db: Session = Depends(get_db)):
         "conversation_id": str(conversation.id)
     }
 
+
 class MessageParser(BaseModel):
     conversation_id: str
 

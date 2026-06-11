@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
+from app.config import settings
 from app.routes.chat import router as chat_router
 from app.routes.scraper import router as scraper_router
 from app.routes.therapists import router as therapists_router
@@ -39,12 +40,12 @@ async def rate_limit(request, call_next):
     return await call_next(request)
 
 app.add_middleware(
-     CORSMiddleware,
-     allow_origins=["http://localhost:3000"],  
-     allow_credentials=True,
-     allow_methods=["*"],  # Allows get post etc
-     allow_headers=["*"],  
- )
+    CORSMiddleware,
+    allow_origins=settings.ALLOWED_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.get("/health")
 async def health():

@@ -33,6 +33,6 @@ async def get_outreach(user_id: str, db: Session = Depends(get_db)):
     outreach = db.query(Outreach).filter(Outreach.user_id == user_id).all()
 
     if not outreach:
-            raise HTTPException(status_code=404, detail="Failed to find Outreach")
-    
+        raise HTTPException(status_code=404, detail="Failed to find Outreach")
+
     return outreach
