@@ -14,7 +14,7 @@ import os
 
 
 load_dotenv()
-redis_client = redis.from_url(os.getenv("REDIS_URL", "redis://localhost:6379"))
+redis_client = redis.from_url(os.getenv("REDIS_URL"), decode_responses=True)
 
 
 app = FastAPI(
@@ -28,15 +28,16 @@ async def rate_limit(request, call_next):
     ip = request.client.host
     key = f"rate:{ip}"
 
-    count = redis_client.incr(key)
-    if count == 1:
-        redis_client.expire(key, 3600)  # 3600 seconds = 1 hour
-    
-    # 4. reject if over limit
-    if count > 100:
-        return Response("Rate limit exceeded", status_code=429)
-    
-    # 5. continue normally
+    try:
+        count = redis_client.incr(key)
+        if count == 1:
+            redis_client.expire(key, 3600)  # 1 hour
+
+        if count > 100:
+            return Response("Rate limit exceeded", status_code=429)
+    except redis.exceptions.ConnectionError:
+        pass  # Redis unavailable, skip rate limiting
+
     return await call_next(request)
 
 app.add_middleware(
