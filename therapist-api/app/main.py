@@ -50,7 +50,7 @@ app.add_middleware(
 
 @app.get("/health")
 async def health():
-    return {}
+    return {"status": "ok"}
 
 app.include_router(chat_router, prefix="/api/chat", tags=["chat"])
 app.include_router(scraper_router, prefix="/api/scrape", tags=["scrape"])
