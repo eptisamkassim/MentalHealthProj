@@ -22,7 +22,7 @@ def chat_message(request: ChatMessageRequest, db: Session = Depends(get_db)):
     if user_exists is None:
         new_user = User(
             id = request.user_id,
-            email = "" 
+            email = None
         )
         db.add(new_user)
         db.commit()
