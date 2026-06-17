@@ -5,16 +5,14 @@ from app.models.therapist import Therapist
 
 class ScraperService:
 
-    async def get_city_therapist(self, city: str, db: Session):
-        if city is None:
-            raise ValueError("City is required")
+    async def get_therapist(self, db: Session):
         
         # Playwright controls a real browser
         async with async_playwright() as p:
             browser = await p.chromium.launch()  # open Chrome
             page = await browser.new_page()      # open a tab            
             for page_num in range(1, 15):  # 1 to 10
-                url = f"https://www.psychologytoday.com/us/therapists?search={city}&page={page_num}"
+                url = f"https://www.psychologytoday.com/us/therapists?search=Boston&page={page_num}"
                 await page.goto(url)
                 
                 links = await page.query_selector_all("a.profile-title")
@@ -100,7 +98,6 @@ class ScraperService:
                             specialty = specialty_list,
                             accepting_new_clients = accepting_new_clients,
                             session_type = session_type,
-                            location = city,
                             therapy_type = therapy_type_list
                         )
 

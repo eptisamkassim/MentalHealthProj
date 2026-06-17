@@ -1,0 +1,18 @@
+services:
+  api:
+    build: ./therapist-api
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./therapist-api/.env
+    restart: unless-stopped
+
+  web:
+    build: ./therapist-matcher
+    ports:
+      - "3000:3000"
+    environment:
+      - API_URL=http://api:8000
+    depends_on:
+      - api
+    restart: unless-stopped

@@ -4,12 +4,12 @@ import { useState, useRef, useEffect } from 'react'
 import { Mic, ChevronLeft, ChevronRight, RotateCcw } from 'lucide-react'
 import TherapistCard from '@/components/TherapistCard'
 import ReactMarkdown from 'react-markdown'
-
+// eslint-disable @typescript-eslint/no-explicit-any
 
 function getUserId() {
     if (typeof window === "undefined") return ""
 
-    let userId = localStorage.getItem("user_id")
+    let userId = localStorage.getItem("user_id") // Saves user id in browser storage
     if (!userId) {
         userId = crypto.randomUUID()
         localStorage.setItem("user_id", userId)
@@ -24,14 +24,11 @@ export default function VoiceInterface() {
     const [inputText, setInputText] = useState("")
     const [userId] = useState(() => getUserId())
     const [conversationId, setConversationId] = useState("")
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [userPreferences, setUserPreferences] = useState<any>(null)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [therapists, setTherapists] = useState<any[]>([])
     const [currentIndex, setCurrentIndex] = useState(0)
     const [showModal, setShowModal] = useState(false)
     const [emailDraft, setEmailDraft] = useState<{ email_subject: string, email_body: string, talking_points: string[] } | null>(null)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [selectedTherapist, setSelectedTherapist] = useState<any>(null)
     const [userName, setUserName] = useState("")
     const [isAiLoading, setAiLoadingState] = useState(false)
@@ -40,17 +37,18 @@ export default function VoiceInterface() {
     const [emailFailureMessage, setEmailFailureMessage] = useState("")
     const [chatFailureMessage, setChatFailureMessage] = useState("")
     const [therapistFailureMessage, setTherapistFailureMessage] = useState("")
+    const [insuranceFallback, setInsuranceFallback] = useState<{ active: boolean; insurance: string }>({ active: false, insurance: "" })
     const mediaRecorderRef = useRef<MediaRecorder | null>(null)
     const audioChunksRef = useRef<Blob[]>([])
     const inputRef = useRef<HTMLInputElement>(null)
     const messagesEndRef = useRef<HTMLDivElement>(null)
 
+    // Scrolls to the latest chat message
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
     }, [messages])
 
-
-
+    // Reset everything when button is pressed
     function resetAll() {
         setCurrentIndex(0)
         setConversationId("")
@@ -60,16 +58,24 @@ export default function VoiceInterface() {
         setChatFailureMessage("")
         setEmailFailureMessage("")
         setTherapistFailureMessage("")
+        setInsuranceFallback({ active: false, insurance: "" })
     }
 
+    // Next in Therapist Carousel 
     function goNext() {
         if (currentIndex + 1 < therapists.length) {
             setCurrentIndex(currentIndex + 1)
         }
     }
+    
+    // Prev in Therapist Carousel 
+    function goPrev() {
+        if (currentIndex - 1 >= 0) {
+            setCurrentIndex(currentIndex - 1)
+        }
+    }
 
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // Emailing therapist
     async function handleReachOut(therapist: any) {
         setEmailLoadingState(true)
         setEmailFailureMessage("")
@@ -86,7 +92,6 @@ export default function VoiceInterface() {
                     conversation_id: conversationId,
                     user_name: "",
                     user_email: "",
-                    user_phone_number: "",
                     userPreferences: userPreferences
                 })
             })
@@ -99,11 +104,6 @@ export default function VoiceInterface() {
         }
     }
 
-    function goPrev() {
-        if (currentIndex - 1 >= 0) {
-            setCurrentIndex(currentIndex - 1)
-        }
-    }
 
     function toggleRecording() {
         if (isRecording) {
@@ -162,20 +162,23 @@ export default function VoiceInterface() {
         }
     }
 
-    async function sendMessage(overrideText?: string) {
-        const messageText = overrideText || inputText
+    // Sends a user message to the AI and gets a response
+    // When enough info is collected it searches for therapists.
+    async function sendMessage(voiceText?: string) {
+        
+        const messageText = voiceText || inputText
 
-        if (!messageText) {
+        if (!messageText) { // Don't send empty messages
             return
         }
 
         setMessages([...messages, { role: "user", content: messageText }])
         setInputText("")
-        setAiLoadingState(true)
+        setAiLoadingState(true) 
         setChatFailureMessage("")
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         let localTherapists: any[] = []
 
+        // Send message to backend
         try {
             const response = await fetch("/api/chat/message", {
                 method: "POST",
@@ -187,13 +190,14 @@ export default function VoiceInterface() {
                 })
             })
 
-            const data = await response.json()
+            const data = await response.json() // AI response
             setMessages(prev => [...prev, { role: "assistant", content: data.message }])
             setAiLoadingState(false)
             setConversationId(data.conversation_id)
 
             const localConvoId = data.conversation_id
 
+            // Backend tries to get preferences
             if (therapists.length === 0) {
                 try {
                     const preferencesResponse = await fetch("/api/chat/extract-preferences", {
@@ -208,6 +212,7 @@ export default function VoiceInterface() {
                     setUserPreferences(preferenceData)
                     localStorage.setItem("userPreferences", JSON.stringify(preferenceData))
 
+                    // Find therapist if the required info from preference data is defined
                     if (preferenceData.insurance && preferenceData.therapy_type &&
                         preferenceData.concerns.length > 0 && therapists.length === 0) {
 
@@ -220,12 +225,16 @@ export default function VoiceInterface() {
                                 body: JSON.stringify(preferenceData)
                             })
 
+                            // Retrieves therapist list
                             const therapistsData = await therapistsResponse.json()
-                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                            localTherapists = therapistsData.map((item: any) => item.therapist)
-                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                            localStorage.setItem("therapists", JSON.stringify(therapistsData.map((item: any) => item.therapist)))
+                            localTherapists = therapistsData.results.map((item: any) => item.therapist)
+                            localStorage.setItem("therapists", JSON.stringify(therapistsData.results.map((item: any) => item.therapist)))
                             setTherapists(localTherapists)
+                            
+                            // Handles no therapist accepting users insurance
+                            if (therapistsData.insurance_fallback) {
+                                setInsuranceFallback({ active: true, insurance: therapistsData.insurance })
+                            }
                             setMessages(prev => [...prev, { role: "assistant", content: "We found some matches" }])
                         } catch {
                             setTherapistFailureMessage("Unable to show therapists")
@@ -252,6 +261,7 @@ export default function VoiceInterface() {
                 <h1 className="text-2xl font-bold mb-6 text-center text-gray-900"> Let&apos;s find your perfect therapist</h1>
                 <button className="absolute top-4 right-4 text-gray-400 hover:text-gray-600" type="button" onClick={resetAll}>
                     <RotateCcw size={16}></RotateCcw>
+                    {/* Reset button */}
                 </button>
                 <div className="space-y-4 mt-6">
                     {messages.map((msg, idx) => (
@@ -263,6 +273,7 @@ export default function VoiceInterface() {
                         </div>
                     ))}
                     <div ref={messagesEndRef} />
+                    {/* Loading vars to tell users to wait something is happening in backend  */}
                     {isAiLoading && !isTherapistLoading && <div className='text-purple-600 text-2xl'> <span className='animate-bounce' style={{ animationDelay: '0ms' }}>.</span>
                         <span className='animate-bounce' style={{ animationDelay: '150ms' }}>.</span>
                         <span className='animate-bounce' style={{ animationDelay: '300ms' }}>.</span>    </div>}
@@ -274,17 +285,24 @@ export default function VoiceInterface() {
                 {therapistFailureMessage.length > 0 && <div> <span className='text-red-500'>{therapistFailureMessage}</span></div>}
                 {!isTherapistLoading && therapists.length > 0 && (
                     <div className="mt-8">
+                        {/* Handles no therapist with user insurance */}
+                        {insuranceFallback.active && (
+                            <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800">
+                                We couldn&apos;t find therapists who accept <span className="font-semibold">{insuranceFallback.insurance}</span>. Showing therapists who may accept other insurance or self-pay.
+                            </div>
+                        )}
                         <p className="text-gray-700 font-medium mb-3">
                             Here are some therapists we think will be a great match for you
                         </p>
 
                         <div className="relative">
+                                    {/* Therapist Card holds therapist info */}
                                     <TherapistCard
                                         therapist={therapists[currentIndex]}
                                         userInsurance={userPreferences?.insurance || ""}
                                         onReachOut={() => handleReachOut(therapists[currentIndex])}
                                     />
-
+                                    {/* Carousel to click through the available therapist */}
                                     {currentIndex > 0 ? (
                                         <button onClick={goPrev} className="absolute left-0 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full border border-gray-200 flex items-center justify-center text-gray-500 bg-white shadow-sm hover:bg-gray-50">
                                             <ChevronLeft size={18} />
@@ -353,7 +371,7 @@ export default function VoiceInterface() {
                             <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-600">✕</button>
                         </div>
 
-                        {/* Contact info */}
+                        {/* Contact info page */}
                         <div className="mb-4">
                             <p className="text-xs font-medium text-gray-500 mb-1">Your name</p>
                             <input value={userName} onChange={(e) => setUserName(e.target.value)}
@@ -384,7 +402,12 @@ export default function VoiceInterface() {
                                 const mailtoLink = `mailto:?subject=${encodeURIComponent(emailDraft?.email_subject || "")}&body=${encodeURIComponent(emailDraft?.email_body || "")}`
                                 window.open(mailtoLink)
 
-                                // add talking points to chat
+                                fetch("/api/outreach", {
+                                    method: "POST",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({ user_id: userId, therapist_id: selectedTherapist?.id })
+                                }).catch(() => {})
+
                                 const emailConfirmation = "You reached out to " + selectedTherapist?.name
                                 setMessages(prev => [...prev, { role: "assistant", content: emailConfirmation }])
                                 setShowModal(false)

@@ -19,6 +19,7 @@ def chat_message(request: ChatMessageRequest, db: Session = Depends(get_db)):
     
     user_exists = db.query(User).filter(User.id == request.user_id).first()
 
+    # Creates a new user if they don't exist
     if user_exists is None:
         new_user = User(
             id = request.user_id,
@@ -69,7 +70,6 @@ def chat_message(request: ChatMessageRequest, db: Session = Depends(get_db)):
         "conversation_id": str(conversation.id)
     }
 
-
 class MessageParser(BaseModel):
     conversation_id: str
 
@@ -78,8 +78,7 @@ async def extract_preferences(data: MessageParser, db: Session = Depends(get_db)
     
     if data.conversation_id is None:
         raise HTTPException(status_code=404, detail="Conversation ID not found")
-
-    
+ 
     # Query for existing conversation
     conversation = db.query(Conversation).filter(
         Conversation.id == data.conversation_id
@@ -91,7 +90,7 @@ async def extract_preferences(data: MessageParser, db: Session = Depends(get_db)
     response = gpt_service.extract_preferences(conversation.messages)
 
     conversation.preference = response
-    flag_modified(conversation, "preference")
+    flag_modified(conversation, "preference") # Notify SQLAlchemy of change
     db.commit()
             
     if not response:

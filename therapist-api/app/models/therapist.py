@@ -14,7 +14,7 @@ class Therapist(Base):
     specialty = Column(ARRAY(String), default=[])
     bio = Column(Text)
     insurance_list = Column(ARRAY(String), default=[])
-    location = Column(String)
+    location = Column(String, default="Boston")
     therapy_type = Column(ARRAY(String), default=[])
     bio_embedding = Column(Vector(1536))  # For semantic search
     accepting_new_clients = Column(Boolean, default=None)

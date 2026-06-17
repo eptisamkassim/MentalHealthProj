@@ -1,5 +1,5 @@
 
-from fastapi import APIRouter,  HTTPException, Depends
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from app.models.therapist import Therapist
@@ -19,14 +19,16 @@ class SearchRequest(BaseModel):
 
 @router.post("/search")
 async def search_therapists(data: SearchRequest, db: Session = Depends(get_db)):
-    # filter by insurance
+    insurance_fallback = False # Ensure Therapist with rare insurance
+
     if data.insurance.lower() in ["out of pocket", "out-of-pocket"]:
         therapists = db.query(Therapist).all()
     else:
         therapists = db.query(Therapist).filter(Therapist.insurance_list.contains([data.insurance])).all()
-        
-    # 2. semantic match
+        if not therapists:
+            therapists = db.query(Therapist).all()
+            insurance_fallback = True # No Therapist has this insurance show out-of-pocket therapist
+
     results = matching_service.match(therapists, data)
-        
-    # 3. return
-    return results
+
+    return {"results": results, "insurance_fallback": insurance_fallback, "insurance": data.insurance}

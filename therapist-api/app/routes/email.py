@@ -14,7 +14,6 @@ class EmailRequest(BaseModel):
         conversation_id: str
         user_name: str
         user_email: str = ""
-        user_phone_number: str = ""
         user_preferences: dict = None
 
 
@@ -32,8 +31,5 @@ async def draft_email(data: EmailRequest, db: Session = Depends(get_db)):
 
         preferences = conversation.preference or data.user_preferences
 
-
-        result = gpt_service.generate_email(therapist, preferences, data.user_name, data.user_email, data.user_phone_number)
-
+        result = gpt_service.generate_email(therapist, preferences, data.user_name, data.user_email)
         return result
-

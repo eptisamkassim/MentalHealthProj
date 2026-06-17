@@ -1,16 +1,17 @@
-from app.services.gpt_service import GPTService
-import numpy as np
 import json
+import logging
+import numpy as np
+from app.services.gpt_service import GPTService
 
+logger = logging.getLogger(__name__)
 gpt_service = GPTService()
 
 class MatchingService:
-    
+
     def match(self, therapists, preferences):
-        # 1. build text from preferences
-        text = f"{preferences.therapy_type} {' '.join(preferences.concerns)}"  # combine therapy_type and concerns
-        
-        # 2. generate embedding for user preferences
+        text = f"{preferences.therapy_type} {' '.join(preferences.concerns)}"
+
+        # Create embeddings from user preferences
         try:
             response = gpt_service.client.embeddings.create(
                 input=text,
@@ -18,10 +19,10 @@ class MatchingService:
             )
             user_embedding = response.data[0].embedding
         except Exception as e:
-            print(f"Embedding error: {str(e)}")
+            logger.error(f"Embedding error: {e}")
             raise
-        
-        # 3. score each therapist
+
+        # Traverse all therapist embeddings to find similar ones to user
         scored = []
         for therapist in therapists:
             similarity = self.cosine_similarity(therapist.bio_embedding, user_embedding)
@@ -38,13 +39,13 @@ class MatchingService:
                     "session_type": therapist.session_type
                 },
                 "score": similarity
-            })        
-        # 4. sort by score and return top 10
+            })
+
+        # Get top 10 matches
         scored.sort(key=lambda x: x["score"], reverse=True)
-
         top_10 = scored[:10]
-        prompt_string= "" 
 
+        prompt_string = ""
         for item in top_10:
             prompt_string += f"Name: {item['therapist']['name']} Specialty: {item['therapist']['specialty']} Therapy Type {item['therapist']['therapy_type']}\n"
 
@@ -53,21 +54,24 @@ class MatchingService:
                 model="gpt-4.1-nano",
                 max_tokens=800,
                 messages=[
-                    {"role": "system", "content": f"For every therapist in the prompt string below mention why they are a good match with the user looking for '{preferences.therapy_type}' for '{preferences.concerns}' in 1. If you are referring to a therapist only use their first name.  Return only a JSON array of 10 strings "},
+                    {"role": "system", "content": f"For every therapist in the prompt string below mention why they are a good match with the user looking for '{preferences.therapy_type}'" +
+                     "for '{preferences.concerns}' in 1 sentence. If you are referring to a therapist only use their first name. Return only a JSON array of strings, one per therapist."},
                     {"role": "user", "content": prompt_string}
                 ]
             )
             reasons = json.loads(response.choices[0].message.content)
         except json.JSONDecodeError:
+            logger.warning("Failed to parse match reasons JSON")
             return top_10
         except Exception as e:
-            print(f"GPT match reason error: {str(e)}")
+            logger.error(f"GPT match reason error: {e}")
             return top_10
 
         for i, result in enumerate(top_10):
-            result["therapist"]["match_reason"] = reasons[i]
+            result["therapist"]["match_reason"] = reasons[i] if i < len(reasons) else ""
 
         return top_10
-    
+
+    # Calculates similarty between 2 embeddings. Higher number means better match
     def cosine_similarity(self, vec1, vec2):
         return np.dot(vec1, vec2) / (np.linalg.norm(vec1) * np.linalg.norm(vec2))
