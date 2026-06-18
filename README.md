@@ -135,5 +135,5 @@ OPENAI_API_KEY=sk-...
 ## Deployment
 
 - **Frontend**: Deploy `therapist-matcher` to [Vercel](https://vercel.com)
-- **Backend**: Deploy `therapist-api` to [Railway](https://railway.app)
+- **Backend**: Deploy `therapist-api` to [Render](https://render.com)
 - **Database**: PostgreSQL with pgvector extension enabled
