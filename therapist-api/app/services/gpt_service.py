@@ -27,7 +27,8 @@ class GPTService:
                 Ask ONE question at a time.
 
                 You need to learn:
-                1. The specific insurance provider name (e.g. Blue Cross Blue Shield, Aetna, Cigna, United Healthcare). If the user just says "yes I have insurance" or "I'm insured", do NOT move on — ask them which provider. If paying out-of-pocket or uninsured, set to 'out of pocket'.
+                1. The specific insurance provider name (e.g. Blue Cross Blue Shield, Aetna, Cigna, United Healthcare). If the user just says "yes I have insurance" or "I'm insured", 
+                          do NOT move on — ask them which provider. If paying out-of-pocket or out of pocket or uninsured, set to 'out of pocket'.
                 2. Type of therapy (CBT, DBT, trauma-focused, etc.)
                 3. Main concerns/conditions
 
@@ -41,7 +42,7 @@ class GPTService:
                 - **ACT (Acceptance and Commitment Therapy)**: Helps you accept difficult thoughts and feelings while focusing on actions aligned with your values.
                 - **Child & Adolescent Therapy**: For children and teens facing emotional, behavioral, school, or family-related challenges.
                 
-                After each answer, ask the next question naturally. When you have all the required info, confirm back in one natural conversational sentence (no bullet points or labels),
+                After each answer, ask the next question naturally. When you have all pieces of info (insurance, therapy type, concern), confirm back in one natural conversational sentence (no bullet points or labels),
                 then on a new line say exactly: "Finding matches now"
 
                 If the user says they are paying out of pocket or self-pay, set insurance to 'out of pocket' instead of null.
@@ -75,9 +76,9 @@ class GPTService:
 
         system_prompt = """Extract user preferences from the conversation in JSON format.
         Return ONLY valid JSON with these fields:
-        - insurance (string or null)
+        - insurance (string or null): the specific insurance provider name, or "out of pocket" if the user is self-paying or uninsured. Never return null if the user mentioned any form of payment or insurance.
         - therapy_type (string or null)
-        - concerns (array of strings)
+        - concerns (array of strings, never null — use [] if not mentioned)
         - availability (string or null)"""
 
         try:
@@ -114,7 +115,10 @@ class GPTService:
         It should sound like a real person wrote it — natural, warm, and conversational. Not stiff or corporate.
         Cover these points casually: whether the therapist is taking new patients, whether they accept the person's insurance,
         a brief mention of what they're dealing with, and their general availability. Keep it short
-        Also include talking points as helpful questions to ask during a consultation to make sure it's a good fit. Talking points should NOT be in the email body — they are separate.
+        Also include exactly 3 talking points — questions to ask during the consultation to understand the therapist's 
+        therapeutic approach and how they work. Do NOT include questions about availability, scheduling, session format 
+        (in-person/virtual), or insurance — those are already handled. Focus on how they approach treatment, their style, 
+        and how they tailor therapy to the individual. Talking points should NOT be in the email body — they are separate.
         Return only a JSON object with these exact keys:
             - email_subject
             - email_body

@@ -38,6 +38,8 @@ export default function VoiceInterface() {
     const [chatFailureMessage, setChatFailureMessage] = useState("")
     const [therapistFailureMessage, setTherapistFailureMessage] = useState("")
     const [insuranceFallback, setInsuranceFallback] = useState<{ active: boolean; insurance: string }>({ active: false, insurance: "" })
+    const [emailSent, setEmailSent] = useState(false)
+    const [consultationQuestions, setConsultationQuestions] = useState<string[]>([])
     const mediaRecorderRef = useRef<MediaRecorder | null>(null)
     const audioChunksRef = useRef<Blob[]>([])
     const inputRef = useRef<HTMLInputElement>(null)
@@ -60,6 +62,7 @@ export default function VoiceInterface() {
         setChatFailureMessage("")
         setEmailFailureMessage("")
         setTherapistFailureMessage("")
+        setEmailSent(false)
         setInsuranceFallback({ active: false, insurance: "" })
     }
 
@@ -81,6 +84,7 @@ export default function VoiceInterface() {
     async function handleReachOut(therapist: any) {
         setEmailLoadingState(true)
         setEmailFailureMessage("")
+        setEmailSent(false)
 
         try {
             setSelectedTherapist(therapist)
@@ -332,6 +336,8 @@ export default function VoiceInterface() {
                                 therapist={therapists[currentIndex]}
                                 userInsurance={userPreferences?.insurance || ""}
                                 onReachOut={() => handleReachOut(therapists[currentIndex])}
+                                emailSent={emailSent}
+                                consultationQuestions={consultationQuestions}
                             />
                             {/* Carousel to click through the available therapist */}
                             {currentIndex > 0 ? (
@@ -447,12 +453,17 @@ export default function VoiceInterface() {
                                     headers: { "Content-Type": "application/json" },
                                     body: JSON.stringify({ user_id: userId, therapist_id: selectedTherapist?.id })
                                 }).catch(() => {})
-                                setMessages(prev => [...prev, { role: "assistant", content: "You reached out to " + selectedTherapist?.name }])
-                                setShowModal(false)
+                                setEmailSent(true)
+                                setConsultationQuestions(emailDraft?.talking_points ?? [])
+                                setTimeout(() => setShowModal(false), 1200)
                             }}
-                            disabled={!emailDraft || isEmailLoading}
-                            className="mt-5 w-full bg-accent text-white py-2.5 rounded-lg text-sm font-medium hover:bg-accent-dark disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
-                            Send email
+                            disabled={!emailDraft || isEmailLoading || emailSent}
+                            className={`mt-5 w-full py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                                emailSent
+                                    ? 'bg-[#3F6653] text-white cursor-default'
+                                    : 'bg-accent text-white hover:bg-accent-dark disabled:opacity-40 disabled:cursor-not-allowed'
+                            }`}>
+                            {emailSent ? '✓ Email sent' : 'Send email'}
                         </button>
                     </div>
                 </div>
