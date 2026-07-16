@@ -1,34 +1,34 @@
 # AI Therapist Matching Agent
-
-A web app that matches users with compatible therapists using AI, currently focused on the Greater Boston area. Users can speak or type their needs, the app extracts preferences, and returns ranked therapist matches with auto-generated outreach emails.
-
+ 
+A web app that matches users with compatible therapists using AI, currently focused on the Greater Boston area. Users can speak or type their needs, the app extracts preferences, and returns ranked therapist matches with auto-generated outreach emails and personalized consultation questions.
+ 
 ## Demo
-
-> Voice or text intake → Therapist matches → One-click email drafts
-
+ 
+> Voice or text intake → Therapist matches → One-click email drafts → Consultation questions
+ 
 **Try it live: [mental-health-proj.vercel.app](https://mental-health-proj.vercel.app/)**
-
+ 
 ---
-
+ 
 ## The Problem
-
+ 
 Mental health care in the US has a massive access gap, and finding the right therapist is a major barrier.
-
+ 
 | Stat | Source |
 |---|---|
 | 23.4% of adults in the U.S. experienced any mental illness (AMI) in the past year, equivalent to over 60 million people | [Mental Health America, 2025](https://mhanational.org/wp-content/uploads/2025/09/State-of-Mental-Health-2025.pdf) |
 | 1 in 4 (25%) adults with AMI reported an unmet need for mental health treatment in the past year | [Mental Health America, 2025](https://mhanational.org/wp-content/uploads/2025/09/State-of-Mental-Health-2025.pdf) |
-
+ 
 **This app addresses these barriers directly, starting with the Greater Boston area:**
 - Removes the overwhelming provider search process with AI-guided matching
 - Filters by insurance upfront so users only see accessible options
 - Auto-generates outreach emails so users don't have to cold-call offices
+- Surfaces personalized consultation questions after outreach, so users walk into their first call prepared instead of guessing what to ask
 - Voice-first design lowers friction for users in distress
-
 ---
-
+ 
 ## Tech Stack
-
+ 
 | Layer | Tech |
 |---|---|
 | Frontend | Next.js 14, React, TypeScript, Tailwind CSS |
@@ -39,21 +39,25 @@ Mental health care in the US has a massive access gap, and finding the right the
 | Matching | OpenAI Embeddings + pgvector semantic search |
 | Scraping | Playwright + BeautifulSoup4 |
 | Deployment | Vercel (frontend), Railway (backend) |
-
+ 
 ---
-
+ 
 ## Features
-
+ 
 - **Voice or text intake**: speak or type your needs, whichever you prefer
 - **AI conversation**: OpenAI GPT asks follow-up questions to extract your preferences
 - **Semantic matching**: pgvector finds therapists by specialty, insurance, and bio similarity
 - **Email generation**: OpenAI drafts a personalized outreach email for each therapist
-- **Outreach tracking**: log and view emails sent to therapists
+- **Consultation questions**: after an email is sent, GPT generates a tailored set of questions the user can ask that specific therapist during a first call, based on the therapist's specialties and the user's stated needs
 
+### Why consultation questions matter
+ 
+Reaching out to a therapist is only half the problem, most people don't know what to ask once they're on the call, especially if they're anxious or overwhelmed. After a user emails a therapist, the app generates a short list of questions tailored to that therapist's specialties and the user's stated concerns, turning a cold email into the start of an informed conversation and giving users a concrete way to check fit before committing to ongoing sessions.
+ 
 ---
-
+ 
 ## Project Structure
-
+ 
 ```
 MentalHealthProj/
 ├── therapist-matcher/        # Next.js frontend
@@ -65,28 +69,27 @@ MentalHealthProj/
     │   └── services/         # gpt, matching, scraper
     └── tests/
 ```
-
+ 
 ---
-
+ 
 ## Local Development
-
+ 
 For contributors who want to run the project locally.
-
+ 
 ### Prerequisites
-
+ 
 - Node.js 18+, Python 3.10+, Docker, OpenAI API key
-
 ### Frontend
-
+ 
 ```bash
 cd therapist-matcher
 npm install
 # Add your env vars to .env.local
 npm run dev
 ```
-
+ 
 ### Backend
-
+ 
 ```bash
 cd therapist-api
 python -m venv venv && source venv/bin/activate
@@ -94,46 +97,46 @@ pip install -r requirements.txt
 # Add your env vars to .env
 uvicorn app.main:app --reload
 ```
-
+ 
 ### Database
-
+ 
 ```bash
 docker-compose up -d
 python create_tables.py
 python generate_embeddings.py
 ```
-
+ 
 ---
-
+ 
 ## Environment Variables
-
+ 
 ### Frontend (`therapist-matcher/.env.local`)
-
+ 
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:8000
 ```
-
+ 
 ### Backend (`therapist-api/.env`)
-
+ 
 ```env
 DATABASE_URL=postgresql://postgres:password@localhost:5432/therapist_db
 OPENAI_API_KEY=sk-...
 ```
-
+ 
 ---
-
+ 
 ## Performance (Validated Benchmarks)
-
+ 
 | Metric | Result |
 |---|---|
 | OpenAI multi-turn chat response time | ~800ms avg |
 | Therapist matching with AI explanations | ~2.8s avg |
 | Endpoint reliability | 100% across 20 automated test runs |
-
+ 
 ---
-
+ 
 ## Deployment
-
+ 
 - **Frontend**: Deploy `therapist-matcher` to [Vercel](https://vercel.com)
 - **Backend**: Deploy `therapist-api` to [Render](https://render.com)
 - **Database**: PostgreSQL with pgvector extension enabled
