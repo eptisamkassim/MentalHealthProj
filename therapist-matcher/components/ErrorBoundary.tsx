@@ -15,13 +15,13 @@ export default class ErrorBoundary extends Component<Props, State> {
     render() {
         if (this.state.hasError) {
             return (
-                <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
-                    <div className="bg-white rounded-xl shadow-lg p-8 max-w-md text-center">
-                        <p className="text-lg font-semibold text-gray-900 mb-2">Something went wrong</p>
-                        <p className="text-sm text-gray-500 mb-4">Please refresh the page to try again.</p>
+                <div className="min-h-screen flex items-center justify-center bg-bg">
+                    <div className="bg-surface border border-line rounded-[14px] p-8 max-w-md w-full mx-4 text-center">
+                        <p className="font-display font-medium text-ink text-lg mb-2">Something went wrong</p>
+                        <p className="text-sm text-ink-soft mb-6">Please refresh the page to try again.</p>
                         <button
                             onClick={() => window.location.reload()}
-                            className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 text-sm"
+                            className="bg-accent text-white px-5 py-2 rounded-lg hover:bg-accent-dark transition-colors text-sm font-medium"
                         >
                             Refresh
                         </button>

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from 'react'
-import { Mic, ChevronLeft, ChevronRight, RotateCcw } from 'lucide-react'
+import { Mic, ChevronLeft, ChevronRight, RefreshCw, Clock } from 'lucide-react'
 import TherapistCard from '@/components/TherapistCard'
 import ReactMarkdown from 'react-markdown'
 // eslint-disable @typescript-eslint/no-explicit-any
@@ -45,7 +45,9 @@ export default function VoiceInterface() {
 
     // Scrolls to the latest chat message
     useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+        if (messages.length > 0) {
+            messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+        }
     }, [messages])
 
     // Reset everything when button is pressed
@@ -257,92 +259,122 @@ export default function VoiceInterface() {
 
     return (
         <>
-            <div className="bg-white rounded-xl shadow-lg p-8 max-w-2xl mx-auto relative">
-                <h1 className="text-2xl font-bold mb-6 text-center text-gray-900"> Let&apos;s find your perfect therapist</h1>
-                <button className="absolute top-4 right-4 text-gray-400 hover:text-gray-600" type="button" onClick={resetAll}>
-                    <RotateCcw size={16}></RotateCcw>
-                    {/* Reset button */}
-                </button>
-                <div className="space-y-4 mt-6">
-                    {messages.map((msg, idx) => (
-                        <div key={idx} className={`p-4 rounded-lg ${msg.role === "assistant"
-                            ? "bg-blue-50 text-blue-900"
-                            : "bg-gray-50 text-gray-900"
-                            }`}>
-                            <ReactMarkdown>{msg.content}</ReactMarkdown>
-                        </div>
-                    ))}
-                    <div ref={messagesEndRef} />
-                    {/* Loading vars to tell users to wait something is happening in backend  */}
-                    {isAiLoading && !isTherapistLoading && <div className='text-purple-600 text-2xl'> <span className='animate-bounce' style={{ animationDelay: '0ms' }}>.</span>
-                        <span className='animate-bounce' style={{ animationDelay: '150ms' }}>.</span>
-                        <span className='animate-bounce' style={{ animationDelay: '300ms' }}>.</span>    </div>}
-                    {chatFailureMessage.length > 0 && <div> <span className='text-red-500'>{chatFailureMessage}</span></div>}
+            <div className="bg-surface border border-line rounded-[14px] p-8 max-w-2xl mx-auto relative">
+                <div className="flex items-start gap-2 mb-3 px-3 py-2 rounded-full bg-accent-bg text-accent-dark text-xs w-fit">
+                    <Clock size={13} className="shrink-0 mt-0.5" />
+                    <span>This is a demo project hosted on free infrastructure. First load can take up to a minute while the server wakes up. </span>
                 </div>
-                {isTherapistLoading && <div className='text-purple-600 text-2xl'> <span className="animate-bounce" style={{ animationDelay: '0ms' }}>.</span>
-                    <span className='animate-bounce' style={{ animationDelay: '150ms' }}>.</span>
-                    <span className='animate-bounce' style={{ animationDelay: '300ms' }}>.</span>    </div>}
-                {therapistFailureMessage.length > 0 && <div> <span className='text-red-500'>{therapistFailureMessage}</span></div>}
+                {/* Reset button */}
+                <button className="flex items-center gap-1.5 mb-6 text-xs text-ink-soft hover:text-ink transition-colors" type="button" onClick={resetAll} aria-label="Start a new chat" title="Start a new chat">
+                    <RefreshCw size={13} />
+                    <span>Start over</span>
+                </button>
+                <div className="mt-6 mb-2">
+                    {messages.map((msg, idx) => {
+                        if (msg.role === "user") {
+                            return (
+                                <div key={idx} style={{ background: '#EFEDE4', color: 'var(--ink)', borderRadius: 14, borderBottomRightRadius: 4, padding: '14px 18px', fontSize: 14, maxWidth: '82%', marginLeft: 'auto', marginBottom: 10, textAlign: 'left' }}>
+                                    <ReactMarkdown>{msg.content}</ReactMarkdown>
+                                </div>
+                            )
+                        }
+                        if (msg.role === "system") {
+                            return (
+                                <div key={idx} style={{ background: '#FBF3DD', color: '#7A5B14', borderRadius: 14, padding: '14px 18px', fontSize: 14, marginBottom: 10 }}>
+                                    {msg.content}
+                                </div>
+                            )
+                        }
+                        return (
+                            <div key={idx} style={{ background: 'var(--accent-bg)', color: 'var(--accent-dark)', borderRadius: 14, borderBottomLeftRadius: 4, padding: '14px 18px', fontSize: 14, maxWidth: '82%', marginRight: 'auto', marginBottom: 10, textAlign: 'left' }}>
+                                <ReactMarkdown>{msg.content}</ReactMarkdown>
+                            </div>
+                        )
+                    })}
+                    <div ref={messagesEndRef} />
+                    {/* Loading vars to tell users to wait. Something is happening in backend  */}
+                    {isAiLoading && !isTherapistLoading && (
+                        <div style={{ background: 'var(--accent-bg)', color: 'var(--accent-dark)', borderRadius: 14, borderBottomLeftRadius: 4, padding: '14px 18px', fontSize: 20, maxWidth: '82%', marginRight: 'auto', marginBottom: 10, display: 'flex', gap: 2 }}>
+                            <span className="animate-bounce" style={{ animationDelay: '0ms' }}>.</span>
+                            <span className="animate-bounce" style={{ animationDelay: '150ms' }}>.</span>
+                            <span className="animate-bounce" style={{ animationDelay: '300ms' }}>.</span>
+                        </div>
+                    )}
+                    {chatFailureMessage.length > 0 && (
+                        <div style={{ background: '#FBF3DD', color: '#7A5B14', borderRadius: 14, padding: '14px 18px', fontSize: 14, marginBottom: 10 }}>{chatFailureMessage}</div>
+                    )}
+                </div>
+                {isTherapistLoading && (
+                    <div style={{ background: 'var(--accent-bg)', color: 'var(--accent-dark)', borderRadius: 14, borderBottomLeftRadius: 4, padding: '14px 18px', fontSize: 20, maxWidth: '82%', marginRight: 'auto', marginBottom: 10, display: 'flex', gap: 2 }}>
+                            <span className="animate-bounce" style={{ animationDelay: '0ms' }}>.</span>
+                            <span className="animate-bounce" style={{ animationDelay: '150ms' }}>.</span>
+                            <span className="animate-bounce" style={{ animationDelay: '300ms' }}>.</span>
+                        </div>
+                )}
+                {therapistFailureMessage.length > 0 && (
+                    <div style={{ background: '#FBF3DD', color: '#7A5B14', borderRadius: 14, padding: '14px 18px', fontSize: 14, marginBottom: 10 }}>{therapistFailureMessage}</div>
+                )}
                 {!isTherapistLoading && therapists.length > 0 && (
-                    <div className="mt-8">
+                    <div className="mt-6">
                         {/* Handles no therapist with user insurance */}
                         {insuranceFallback.active && (
-                            <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800">
+                            <div className="mb-4" style={{ background: '#FBF3DD', color: '#7A5B14', borderRadius: 14, padding: '14px 18px', fontSize: 14 }}>
                                 We couldn&apos;t find therapists who accept <span className="font-semibold">{insuranceFallback.insurance}</span>. Showing therapists who may accept other insurance or self-pay.
                             </div>
                         )}
-                        <p className="text-gray-700 font-medium mb-3">
+                        <p className="text-ink font-medium mb-3 text-sm">
                             Here are some therapists we think will be a great match for you
                         </p>
 
-                        <div className="relative">
-                                    {/* Therapist Card holds therapist info */}
-                                    <TherapistCard
-                                        therapist={therapists[currentIndex]}
-                                        userInsurance={userPreferences?.insurance || ""}
-                                        onReachOut={() => handleReachOut(therapists[currentIndex])}
-                                    />
-                                    {/* Carousel to click through the available therapist */}
-                                    {currentIndex > 0 ? (
-                                        <button onClick={goPrev} className="absolute left-0 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full border border-gray-200 flex items-center justify-center text-gray-500 bg-white shadow-sm hover:bg-gray-50">
-                                            <ChevronLeft size={18} />
-                                        </button>
-                                    ) : <div />}
+                        <div className="relative px-12">
+                            {/* Therapist Card holds therapist info */}
+                            <TherapistCard
+                                therapist={therapists[currentIndex]}
+                                userInsurance={userPreferences?.insurance || ""}
+                                onReachOut={() => handleReachOut(therapists[currentIndex])}
+                            />
+                            {/* Carousel to click through the available therapist */}
+                            {currentIndex > 0 ? (
+                                <button onClick={goPrev} className="absolute left-0 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full border border-line flex items-center justify-center text-ink-soft bg-surface hover:bg-accent-bg hover:text-accent-dark hover:border-accent-bg transition-colors">
+                                    <ChevronLeft size={16} />
+                                </button>
+                            ) : <div />}
+                            {currentIndex < therapists.length - 1 ? (
+                                <button onClick={goNext} className="absolute right-0 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full border border-line flex items-center justify-center text-ink-soft bg-surface hover:bg-accent-bg hover:text-accent-dark hover:border-accent-bg transition-colors">
+                                    <ChevronRight size={16} />
+                                </button>
+                            ) : <div />}
+                        </div>
 
-                                    {currentIndex < therapists.length - 1 ? (
-                                        <button onClick={goNext} className="absolute right-0 top-1/2 -translate-y-1/2 w-9 h-9 -mx-3 rounded-full border border-gray-200 flex items-center justify-center text-gray-500 bg-white shadow-sm hover:bg-gray-50">
-                                            <ChevronRight size={18} />
-                                        </button>
-                                    ) : <div />}
-                                </div>
+                        <div className="flex justify-center gap-1.5 mt-4 mb-5">
+                            {therapists.map((_, idx) => (
+                                <button key={idx} onClick={() => setCurrentIndex(idx)} className={`w-2 h-2 rounded-full transition-colors ${idx === currentIndex ? "bg-accent" : "bg-line"}`} />
+                            ))}
+                        </div>
 
-                                <div className="flex justify-center gap-1 mt-3 mb-6">
-                                    {therapists.map((_, idx) => (
-                                        <div key={idx} className={`w-2 h-2 rounded-full ${idx === currentIndex ? "bg-purple-600" : "bg-gray-200"}`} />
-                                    ))}
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-2 px-10">
-                                    {therapists.slice(currentIndex + 1, currentIndex + 3).map((t, idx) => (
-                                        <div key={idx} className="bg-gray-50 border border-gray-200 rounded-xl p-3 opacity-60">
-                                            <div className="flex items-center gap-2">
-                                                <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-700 text-xs font-bold flex-shrink-0">
-                                                    {t.name.split(" ").map((n: string) => n[0]).join("").slice(0, 2)}
-                                                </div>
-                                                <div>
-                                                    <p className="text-xs font-medium text-gray-900">{t.name}</p>
-                                                    <p className="text-xs text-gray-500">{t.specialty?.slice(0, 2).join(", ")}</p>
-                                                </div>
-                                            </div>
+                        <div className="grid grid-cols-2 gap-2">
+                            {therapists.slice(currentIndex + 1, currentIndex + 3).map((t, idx) => (
+                                <button key={idx} onClick={() => setCurrentIndex(currentIndex + 1 + idx)} className="bg-surface border border-line rounded-xl p-3 opacity-60 hover:opacity-100 transition-opacity text-left">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-8 h-8 rounded-full bg-accent-bg flex items-center justify-center text-accent-dark text-xs font-medium shrink-0">
+                                            {t.name.split(" ").map((n: string) => n[0]).join("").slice(0, 2)}
                                         </div>
-                                    ))}
-                                </div>
+                                        <div>
+                                            <p className="text-xs font-medium text-ink">{t.name}</p>
+                                            <p className="text-xs text-ink-soft">{t.specialty?.slice(0, 2).join(", ")}</p>
+                                        </div>
+                                    </div>
+                                </button>
+                            ))}
+                        </div>
                     </div>
                 )}
                 <div className="flex gap-2 mt-4">
                     <input
                         ref={inputRef}
-                        className="w-full border border-gray-300 rounded-lg p-3 text-gray-900"
+                        className="flex-1 rounded-lg border border-[#E1DCCE] bg-[#FBFAF6] px-3.5 py-3
+                                    text-sm text-[#202B27] placeholder:text-[#96968C]
+                                    focus:outline-none focus:ring-2 focus:ring-[#3F6653]/30"
                         placeholder="Describe your therapy needs..."
                         type="text"
                         value={inputText}
@@ -350,11 +382,18 @@ export default function VoiceInterface() {
                         onChange={(e) => setInputText(e.target.value)}
                         onKeyDown={(e) => { if (e.key === "Enter") sendMessage() }}
                     />
-                    <button className={` rounded-lg text-white flex items-center justify-center p-3
-                        ${isRecording ? "bg-red-500" : "bg-purple-600 "}`} onClick={toggleRecording}>
-                        <Mic size={20}></Mic>
-                    </button>
-                    <button className="bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-700 disabled:opacity-50 px-3"
+                    <button
+                        className={`flex w-11 items-center justify-center rounded-lg border transition-colors
+                          ${isRecording
+                            ? 'border-[#3F6653] bg-[#E4EAE0] text-[#2A4739]'
+                            : 'border-[#E1DCCE] bg-[#FBFAF6] text-[#5C6B64] hover:border-[#3F6653] hover:bg-[#E4EAE0] hover:text-[#2A4739]'
+                          }`}
+                        onClick={toggleRecording}
+                    >
+                        <Mic size={18} />
+                    </button>                  
+                    <button className="rounded-lg bg-[#3F6653] px-5 text-sm font-medium text-white
+                   transition-colors hover:bg-[#2A4739]"
                         onClick={() => { sendMessage() }}
                         disabled={isAiLoading || isRecording || isTherapistLoading}
                     >
@@ -363,35 +402,37 @@ export default function VoiceInterface() {
                 </div>
             </div>
             {showModal && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start pt-10 justify-center z-50">
-                    <div className="bg-white rounded-xl p-6 max-w-2xl w-full mx-4 max-h-[85vh] flex flex-col overflow-y-auto">
+                <div className="fixed inset-0 bg-black/50 flex items-start pt-10 justify-center z-50">
+                    <div className="bg-surface border border-line rounded-[14px] p-6 max-w-2xl w-full mx-4 max-h-[85vh] flex flex-col overflow-y-auto">
 
-                        <div className="flex justify-between items-center mb-4">
-                            <h2 className="text-lg font-bold text-gray-900">Reach Out to {selectedTherapist?.name}</h2>
-                            <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-600">✕</button>
+                        <div className="flex justify-between items-center mb-5">
+                            <h2 className="font-display font-medium text-ink text-lg">Reach out to {selectedTherapist?.name}</h2>
+                            <button onClick={() => setShowModal(false)} className="w-8 h-8 rounded-full border border-line flex items-center justify-center text-ink-soft hover:bg-accent-bg hover:text-accent-dark transition-colors">✕</button>
                         </div>
 
                         {/* Contact info page */}
                         <div className="mb-4">
-                            <p className="text-xs font-medium text-gray-500 mb-1">Your name</p>
+                            <p className="text-xs font-medium text-ink-soft mb-1.5">Your name</p>
                             <input value={userName} onChange={(e) => setUserName(e.target.value)}
                                 placeholder="Enter your name"
-                                className="w-full bg-gray-50 border-none outline-none rounded-lg p-3 text-sm text-gray-900" />
+                                className="w-full bg-bg border border-line rounded-lg px-3 py-2.5 text-sm text-ink placeholder:text-ink-soft focus:outline-none focus:border-accent transition-colors" />
                         </div>
 
-                        <div className='overflow-y-auto flex-1'>
-                            {emailFailureMessage.length > 0 && <div> <span className='text-red-500'>{emailFailureMessage}</span></div>}
+                        <div className="overflow-y-auto flex-1">
+                            {emailFailureMessage.length > 0 && (
+                                <div className="mb-3" style={{ background: '#FBF3DD', color: '#7A5B14', borderRadius: 10, padding: '12px 16px', fontSize: 13 }}>{emailFailureMessage}</div>
+                            )}
                             {isEmailLoading || !emailDraft ? (
-                                <p className="text-sm text-gray-400 text-center">Generating email...</p>
+                                <p className="text-sm text-ink-soft text-center py-6">Generating email draft…</p>
                             ) : (
                                 <>
-                                    <p className="text-xs font-medium text-gray-500 mb-1">Subject</p>
-                                    <p className="text-sm text-gray-900 bg-gray-50 p-3 rounded-lg mb-3">{emailDraft.email_subject}</p>
-                                    <p className="text-xs font-medium text-gray-500 mb-1">Message</p>
+                                    <p className="text-xs font-medium text-ink-soft mb-1.5">Subject</p>
+                                    <p className="text-sm text-ink bg-bg border border-line px-3 py-2.5 rounded-lg mb-4">{emailDraft.email_subject}</p>
+                                    <p className="text-xs font-medium text-ink-soft mb-1.5">Message</p>
                                     <textarea
                                         value={emailDraft.email_body}
                                         onChange={(e) => setEmailDraft({ ...emailDraft, email_body: e.target.value })}
-                                        className="w-full text-sm text-gray-900 bg-gray-50 p-3 rounded-lg h-80 resize-none outline-none mb-3"
+                                        className="w-full text-sm text-ink bg-bg border border-line px-3 py-2.5 rounded-lg h-80 resize-none focus:outline-none focus:border-accent transition-colors"
                                     />
                                 </>
                             )}
@@ -401,20 +442,17 @@ export default function VoiceInterface() {
                             onClick={() => {
                                 const mailtoLink = `mailto:?subject=${encodeURIComponent(emailDraft?.email_subject || "")}&body=${encodeURIComponent(emailDraft?.email_body || "")}`
                                 window.open(mailtoLink)
-
                                 fetch("/api/outreach", {
                                     method: "POST",
                                     headers: { "Content-Type": "application/json" },
                                     body: JSON.stringify({ user_id: userId, therapist_id: selectedTherapist?.id })
                                 }).catch(() => {})
-
-                                const emailConfirmation = "You reached out to " + selectedTherapist?.name
-                                setMessages(prev => [...prev, { role: "assistant", content: emailConfirmation }])
+                                setMessages(prev => [...prev, { role: "assistant", content: "You reached out to " + selectedTherapist?.name }])
                                 setShowModal(false)
                             }}
                             disabled={!emailDraft || isEmailLoading}
-                            className="w-full bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed mt-4">
-                            Send Email
+                            className="mt-5 w-full bg-accent text-white py-2.5 rounded-lg text-sm font-medium hover:bg-accent-dark disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+                            Send email
                         </button>
                     </div>
                 </div>
