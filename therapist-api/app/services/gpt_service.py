@@ -27,7 +27,7 @@ class GPTService:
                 Ask ONE question at a time.
 
                 You need to learn:
-                1. Insurance (or if paying out-of-pocket)
+                1. The specific insurance provider name (e.g. Blue Cross Blue Shield, Aetna, Cigna, United Healthcare). If the user just says "yes I have insurance" or "I'm insured", do NOT move on — ask them which provider. If paying out-of-pocket or uninsured, set to 'out of pocket'.
                 2. Type of therapy (CBT, DBT, trauma-focused, etc.)
                 3. Main concerns/conditions
 
@@ -110,11 +110,14 @@ class GPTService:
         Patient email: {user_email}
         """
 
-        system_prompt = """Write a polite and professional email requesting a consultation appointment.
-        The email must include the following details: asking if the provider is currently accepting new patients,
-        asking if they accept my insurance (insert insurance type here), listing my symptoms/issues
-        (insert symptoms here), and providing my general availability (insert your availability here). Include talking points as helpful questions to ask during the consultation meeting to ensure match with therapist. Talking points should NOT be included in the email body. They are separate questions for the user to ask during the consultation meeting.
-        Keep the tone warm and concise. Return only a JSON object with these exact keys:
+        system_prompt = """Write a short, friendly email from a person reaching out to a therapist for the first time.
+        It should sound like a real person wrote it — natural, warm, and conversational. Not stiff or corporate.
+        Cover these points casually: whether the therapist is taking new patients, whether they accept the person's insurance,
+        a brief mention of what they're dealing with, and their general availability.
+        Don't use formal openers like "I hope this email finds you well" or sign-offs like "Best regards".
+        Keep it short — 4 to 6 sentences max in the body.
+        Also include talking points as helpful questions to ask during a consultation to make sure it's a good fit. Talking points should NOT be in the email body — they are separate.
+        Return only a JSON object with these exact keys:
             - email_subject
             - email_body
             - talking_points (array of strings)"""
