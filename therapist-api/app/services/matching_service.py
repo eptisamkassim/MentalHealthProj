@@ -55,7 +55,7 @@ class MatchingService:
                 max_tokens=800,
                 messages=[
                     {"role": "system", "content": f"For every therapist in the prompt string below mention why they are a good match with the user looking" + 
-                        "for {preferences.therapy_type} for {', '.join(preferences.concerns)} in 1 sentence. If you are referring to a therapist only use their first name. Return only a JSON array of strings, one per therapist."},
+                        f"for {preferences.therapy_type} for {', '.join(preferences.concerns)} in 1 sentence. If you are referring to a therapist only use their first name. Return only a JSON array of strings, one per therapist."},
                     {"role": "user", "content": prompt_string}
                 ]
             )

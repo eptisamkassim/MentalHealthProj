@@ -41,8 +41,8 @@ class GPTService:
                 - **ACT (Acceptance and Commitment Therapy)**: Helps you accept difficult thoughts and feelings while focusing on actions aligned with your values.
                 - **Child & Adolescent Therapy**: For children and teens facing emotional, behavioral, school, or family-related challenges.
                 
-                After each answer, ask the next question naturally. When you have all 4 pieces of info, summarize what you learned and
-                tell the user: "Finding matches now"
+                After each answer, ask the next question naturally. When you have all the required info, confirm back in one natural conversational sentence (no bullet points or labels),
+                then on a new line say exactly: "Finding matches now"
 
                 If the user says they are paying out of pocket or self-pay, set insurance to 'out of pocket' instead of null.
 
@@ -113,9 +113,7 @@ class GPTService:
         system_prompt = """Write a short, friendly email from a person reaching out to a therapist for the first time.
         It should sound like a real person wrote it — natural, warm, and conversational. Not stiff or corporate.
         Cover these points casually: whether the therapist is taking new patients, whether they accept the person's insurance,
-        a brief mention of what they're dealing with, and their general availability.
-        Don't use formal openers like "I hope this email finds you well" or sign-offs like "Best regards".
-        Keep it short — 4 to 6 sentences max in the body.
+        a brief mention of what they're dealing with, and their general availability. Keep it short
         Also include talking points as helpful questions to ask during a consultation to make sure it's a good fit. Talking points should NOT be in the email body — they are separate.
         Return only a JSON object with these exact keys:
             - email_subject
