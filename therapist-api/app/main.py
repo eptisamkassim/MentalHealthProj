@@ -12,6 +12,9 @@ from app.routes.outreach import router as outreach_router
 from app.routes.voice import router as voice_router
 import redis
 import uvicorn
+from sqlalchemy import text
+from app.database import engine
+
 
 load_dotenv()
 
@@ -77,7 +80,15 @@ async def startup_event():
 
 @app.get("/health")
 async def health():
-    return {"status": "ok", "environment": settings.ENVIRONMENT}
+    try:
+        with engine.connect() as conn:
+            conn.execute(text("SELECT 1"))
+        db_status = "connected"
+    except Exception as e:
+        logger.warning(f"Database health check failed: {e}")
+        db_status = "unreachable"
+
+    return {"status": "ok", "environment": settings.ENVIRONMENT, "db": db_status}
 
 app.include_router(chat_router, prefix="/api/chat", tags=["chat"])
 app.include_router(scraper_router, prefix="/api/scrape", tags=["scrape"])
